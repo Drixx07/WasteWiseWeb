@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WasteWise – Smart Waste Segregation Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2e9e60;
+    --green-dark: #1e7a47;
+    --green-light: #e8f5ee;
+    --blue: #3b5bdb;
+    --blue-dark: #2c44b0;
+    --blue-light: #eef2ff;
+    --orange: #f76707;
+    --orange-light: #fff4e6;
+    --red: #e03131;
+    --red-light: #fff5f5;
+    --purple: #7048e8;
+    --purple-light: #f3f0ff;
+    --yellow: #e67700;
+    --yellow-light: #fff9db;
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --text-sub: #6c757d;
+    --border: #e9ecef;
+    --header-h: 60px;
+    --total-top: calc(60px + 68px);
+    --nav-h: 68px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* ── Header ── */
+  .app-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 60%, #4ade80 100%); color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: var(--header-h);
+  }
+  .app-header .logo { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: -0.5px; }
+  .app-header .logo span { color: #d4f7e7; }
+  .app-header .icon-btn { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 6px; }
+
+  /* ── Hero banner ── */
+  .hero {
+    margin-top: 0;
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 60%, #4ade80 100%);
+    color: #fff; padding: 24px 20px 28px;
+  }
+  .hero h1 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 28px; line-height: 1.15; }
+  .hero p { margin-top: 6px; font-size: 14px; opacity: 0.88; }
+
+  /* ── Top Nav (below header) ── */
+  .bottom-nav {
+    position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 99;
+    background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; height: var(--nav-h);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; transition: color 0.2s;
+    font-size: 10px; font-weight: 600; color: var(--text-sub);
+    border: none; background: none;
+  }
+  .nav-item.active { color: var(--green); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item.cam-btn { flex: 0 0 72px; position: relative; }
+  .cam-circle {
+    width: 52px; height: 52px; background: var(--green);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(46,158,96,0.45);
+    margin-bottom: 0; position: relative; top: 0;
+  }
+  .cam-circle svg { width: 26px; height: 26px; color: #fff; }
+
+  /* ── Screens ── */
+  .screen { display: none; padding: var(--total-top) 0 16px; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* ── Content wrapper ── */
+  .content { padding: 16px; }
+
+  /* ── Feature Cards (Home) ── */
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; }
+  .feature-card {
+    background: var(--card); border-radius: 16px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 12px; cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1.5px solid transparent; transition: all 0.2s;
+  }
+  .feature-card:active { transform: scale(0.98); border-color: var(--green); }
+  .feature-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .feature-card .info { flex: 1; }
+  .feature-card .info h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; }
+  .feature-card .info p { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .chevron { color: var(--text-sub); font-size: 18px; }
+
+  /* ── Camera Screen ── */
+  #screen-camera .hero { margin-top: 0; }
+  .camera-area {
+    background: #111; border-radius: 20px; margin: 16px;
+    overflow: hidden; position: relative; min-height: 300px;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+
+  /* Live video stream */
+  #liveVideo {
+    width: 100%; display: none; border-radius: 20px;
+    max-height: 340px; object-fit: cover; background: #000;
+  }
+  #liveVideo.active { display: block; }
+
+  /* Captured / uploaded image preview */
+  #uploaded-preview {
+    max-width: 100%; max-height: 340px; border-radius: 20px;
+    width: 100%; object-fit: cover; display: none;
+  }
+  #uploaded-preview.visible { display: block; }
+
+  .scan-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .scan-frame { width: 180px; height: 180px; position: relative; }
+  .scan-frame::before, .scan-frame::after,
+  .scan-corner-br, .scan-corner-bl {
+    content: ''; position: absolute; width: 32px; height: 32px; border-color: var(--green); border-style: solid;
+  }
+  .scan-frame::before { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+  .scan-frame::after  { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+  .scan-corner-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+  .scan-corner-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+
+  .camera-placeholder { color: #888; font-size: 13px; text-align: center; padding: 20px; }
+  .camera-placeholder .ph-icon { font-size: 48px; margin-bottom: 8px; }
+
+  .cam-hint { text-align: center; font-size: 13px; color: var(--text-sub); margin: 4px 0 12px; }
+
+  /* ── Camera action row ── */
+  /* Three-button row: Upload | Capture circle | Analyze */
+  .cam-action-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px 14px; gap: 12px;
+  }
+  .cam-side-btn {
+    flex: 1; background: var(--green-light); color: var(--green); border: 2px solid var(--green);
+    border-radius: 14px; padding: 13px 10px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .cam-side-btn:active { background: #c8eeda; }
+
+  /* Big shutter button in the middle */
+  .shutter-btn {
+    width: 68px; height: 68px; flex-shrink: 0;
+    border-radius: 50%; border: 5px solid var(--green);
+    background: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 18px rgba(46,158,96,0.35);
+    transition: transform 0.1s;
+    position: relative;
+  }
+  .shutter-btn:active { transform: scale(0.93); }
+  .shutter-inner {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--green);
+  }
+  /* "Retake" mode — shows a small camera-flip icon inside */
+  .shutter-btn.retake .shutter-inner { background: var(--orange); }
+
+  /* Analyze button (right side) */
+  .analyze-btn {
+    flex: 1; background: var(--green); color: #fff; border: none;
+    border-radius: 14px; padding: 13px 10px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .analyze-btn:active { background: var(--green-dark); }
+  .analyze-btn:disabled { background: #aac9b8; cursor: not-allowed; }
+
+  /* hidden canvas for snapping frames */
+  #snapCanvas { display: none; }
+
+  /* Result card */
+  .result-card {
+    margin: 0 16px 16px; background: var(--card); border-radius: 18px;
+    padding: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    display: none;
+  }
+  .result-card.visible { display: block; }
+  .result-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; }
+  .result-category {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 20px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 14px; margin-bottom: 10px;
+  }
+  .result-description { font-size: 14px; line-height: 1.6; color: var(--text); }
+  .result-placeholder { font-size: 13px; color: var(--text-sub); text-align: center; padding: 8px 0; }
+  .analyzing { display: flex; align-items: center; gap: 10px; }
+  .spinner { width: 20px; height: 20px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Classification ── */
+  .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 12px; }
+  .chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.18s;
+    background: var(--card); color: var(--text-sub); border-color: var(--border);
+  }
+  .chip.active-bio { background: var(--green-light); color: var(--green); border-color: var(--green); }
+  .chip.active-nonbio { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
+  .chip.active-rec { background: #e0f2fe; color: #0369a1; border-color: #0369a1; }
+  .chip.active-res { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
+  .chip.active-haz { background: var(--red-light); color: var(--red); border-color: var(--red); }
+  .chip.active-all { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .waste-card {
+    background: var(--card); border-radius: 16px; margin: 0 16px 12px;
+    padding: 16px; display: flex; gap: 14px; align-items: flex-start;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); cursor: pointer;
+    border: 2px solid transparent; transition: all 0.2s;
+  }
+  .waste-card.selected { border-color: var(--green); }
+  .waste-icon-wrap { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .waste-info h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; }
+  .waste-info .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .waste-info .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; padding: 2px 8px; border-radius: 6px; }
+  .waste-info .detail { font-size: 13px; line-height: 1.55; color: var(--text); margin-top: 8px; }
+
+  /* ── Tips ── */
+  .tip-filter { display: flex; gap: 8px; padding: 0 16px 14px; overflow-x: auto; }
+  .tip-chip {
+    white-space: nowrap; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    background: var(--card); color: var(--text-sub); border: 2px solid var(--border); cursor: pointer;
+  }
+  .tip-chip.active { background: var(--green); color: #fff; border-color: var(--green); }
+  .tip-card {
+    background: var(--card); border-radius: 16px; margin: 0 16px 12px; padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .tip-meta { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--green); text-transform: uppercase; margin-bottom: 6px; }
+  .tip-text { font-size: 14px; line-height: 1.6; }
+
+  /* API key modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 200; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 24px 24px 0 0; padding: 28px 20px 40px;
+    width: 100%; max-width: 480px;
+  }
+  .modal h2 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 20px; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: var(--text-sub); margin-bottom: 16px; line-height: 1.5; }
+  .modal input {
+    width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid var(--border);
+    font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 12px; outline: none;
+  }
+  .modal input:focus { border-color: var(--green); }
+  .modal .btn-primary { width: 100%; background: var(--green); color: #fff; border: none; border-radius: 14px; padding: 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; }
+  .modal .skip-link { text-align: center; margin-top: 10px; font-size: 13px; color: var(--text-sub); cursor: pointer; }
+  .modal .skip-link span { color: var(--green); font-weight: 600; }
+
+  /* MIT mode notice */
+  #mit-notice {
+    display: none; margin: 0 16px 8px;
+    background: #fff9db; border: 1.5px solid #e67700; border-radius: 12px;
+    padding: 10px 14px; font-size: 12px; color: #7c4b00; line-height: 1.5;
+  }
+
+  /* Utility */
+  .mt-16 { margin-top: 16px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="app-header">
+  <div class="logo">Waste<span>Wise</span></div>
+  <button class="icon-btn" onclick="openSettings()" title="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+</header>
+
+<!-- ════════════════ HOME ════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="content" style="padding-top: 20px;">
+    <div class="section-label">Features</div>
+    <div class="feature-card" onclick="switchScreen('camera')">
+      <div class="feature-icon" style="background:#e8f5ee;">📷</div>
+      <div class="info">
+        <h3>Waste Camera</h3>
+        <p>Scan &amp; detect waste instantly with AI</p>
+      </div>
+      <div class="chevron">›</div>
+    </div>
+    <div class="feature-card" onclick="switchScreen('classify')">
+      <div class="feature-icon" style="background:#eef2ff;">🗂️</div>
+      <div class="info">
+        <h3>Waste Classification</h3>
+        <p>Browse by waste type</p>
+      </div>
+      
+    </div>
+    <div class="feature-card" onclick="switchScreen('tips')">
+      <div class="feature-icon" style="background:#fff9db;">💡</div>
+      <div class="info">
+        <h3>Recycling Tips</h3>
+        <p>Practical eco-friendly advice</p>
+      </div>
+      <div class="chevron">›</div>
+    </div>
+
+    <div class="section-label mt-16">Quick Facts</div>
+    <div class="tip-card">
+      <div class="tip-meta">Did you know?</div>
+      <div class="tip-text">Only 9% of all plastic ever produced has been recycled. Proper segregation is the first step to changing this.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-meta">Quezon City Rule</div>
+      <div class="tip-text">Under RA 9003, households must separate biodegradable, non-biodegradable, and special wastes for collection.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CAMERA ════════════════ -->
+<div id="screen-camera" class="screen">
+ 
+
+  <!-- MIT App Inventor notice (shown when MIT bridge is detected) -->
+  <div id="mit-notice">
+    📱 <strong>MIT AI Companion detected.</strong> Use the <strong>📤 Upload</strong> button — your App Inventor block sends the photo here. The shutter button uses the live camera stream.
+  </div>
+
+  <!-- Camera / preview area -->
+  <div class="camera-area" id="cameraArea">
+    <!-- Placeholder shown before camera starts -->
+    <div id="cam-placeholder" class="camera-placeholder">
+      <div class="ph-icon">📸</div>
+      <p>Tap the shutter button below<br>or upload a photo to identify waste</p>
+    </div>
+
+    <!-- Live video (getUserMedia) -->
+    <video id="liveVideo" autoplay playsinline muted></video>
+
+    <!-- Captured / uploaded image preview -->
+    <img id="uploaded-preview" src="" alt="Waste preview">
+
+    <!-- Scan-frame overlay (shown over video or captured image) -->
+    <div class="scan-overlay" id="scanOverlay" style="display:none;">
+      <div class="scan-frame">
+        <div class="scan-corner-br"></div>
+        <div class="scan-corner-bl"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden canvas used to snap frames from the video -->
+  <canvas id="snapCanvas"></canvas>
+
+  <p class="cam-hint" id="camHint">Tap ⚪ to capture · 📁 to upload</p>
+
+  <!-- Three-button camera action row -->
+  <div class="cam-action-row">
+
+    <!-- LEFT: Upload from gallery / MIT bridge -->
+    <button class="cam-side-btn" id="uploadBtn" onclick="handleUploadClick()">
+      📁 Upload
+    </button>
+    <!-- Hidden file input (works on desktop browsers) -->
+    <input type="file" accept="image/*" id="fileInput" style="display:none" onchange="handleFileUpload(event)">
+
+    <!-- CENTRE: Shutter / Retake -->
+    <button class="shutter-btn" id="shutterBtn" onclick="handleShutter()" title="Capture">
+      <div class="shutter-inner"></div>
+    </button>
+
+    <!-- RIGHT: Analyze -->
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeWaste()" disabled>
+      🔍 Analyze
+    </button>
+  </div>
+
+  <!-- Result card -->
+  <div class="result-card" id="resultCard">
+    <div class="result-label">Detection Result</div>
+    <div id="resultContent" class="result-placeholder">Capture or upload a photo, then tap Analyze</div>
+  </div>
+</div>
+
+<!-- ════════════════ CLASSIFICATION ════════════════ -->
+<div id="screen-classify" class="screen">
+  
+  <div class="filter-chips" id="classifyChips">
+    <div class="chip active-all" onclick="filterWaste('all',this)">All</div>
+    <div class="chip" onclick="filterWaste('bio',this)">Biodegradable</div>
+    <div class="chip" onclick="filterWaste('nonbio',this)">Non-biodeg.</div>
+    <div class="chip" onclick="filterWaste('rec',this)">Recyclable</div>
+    <div class="chip" onclick="filterWaste('res',this)">Residual</div>
+    <div class="chip" onclick="filterWaste('haz',this)">Hazardous</div>
+  </div>
+  <div id="wasteList"></div>
+</div>
+
+<!-- ════════════════ TIPS ════════════════ -->
+<div id="screen-tips" class="screen">
+  
+  <div class="tip-filter">
+    <div class="tip-chip active" onclick="filterTips('all',this)">All</div>
+    <div class="tip-chip" onclick="filterTips('home',this)">Home</div>
+    <div class="tip-chip" onclick="filterTips('work',this)">Work</div>
+    <div class="tip-chip" onclick="filterTips('community',this)">Community</div>
+  </div>
+  <div id="tipsList"></div>
+</div>
+
+<!-- ════════════════ BOTTOM NAV ════════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-home" onclick="switchScreen('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button class="nav-item cam-btn" onclick="switchScreen('camera')">
+    <div class="cam-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;color:#fff"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    Camera
+  </button>
+  <button class="nav-item" id="nav-classify" onclick="switchScreen('classify')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Classify
+  </button>
+  <button class="nav-item" id="nav-tips" onclick="switchScreen('tips')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Tips
+  </button>
+</nav>
+
+<!-- ════════════════ API KEY MODAL ════════════════ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>🔑 OpenRouter API Key</h2>
+    <p>Enter your free OpenRouter API key to enable AI waste detection. Get one free at <strong>openrouter.ai</strong> — no credit card needed for free models.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-or-v1-..." value="">
+    <button class="btn-primary" onclick="saveApiKey()">Save Key</button>
+    <div class="skip-link" onclick="closeSettings()"><span>Close</span></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const WASTE_DATA = [
+  { id:'bio',    emoji:'🍃', label:'Biodegradable',     sub:'Food, leaves, paper',           detail:'Organic waste that decomposes naturally. Place in the GREEN bin. Includes food scraps, garden waste, and untreated paper products.',                                    color:'var(--green)',  bg:'var(--green-light)',  badge:'Green Bin',       badgeBg:'#d1fae5', badgeColor:'#065f46' },
+  { id:'nonbio', emoji:'🧱', label:'Non-Biodegradable', sub:'Plastics, metals, glass',        detail:'Materials that do not decompose naturally. Place in the BLUE bin. Includes styrofoam, synthetic textiles, and treated plastics.',                                      color:'var(--blue)',   bg:'var(--blue-light)',   badge:'Blue Bin',        badgeBg:'#dbeafe', badgeColor:'#1e40af' },
+  { id:'rec',    emoji:'♻️', label:'Recyclable',         sub:'Clean bottles, cans, cardboard', detail:'Materials that can be processed and reused. Rinse before placing in recycling. Includes glass bottles, aluminum cans, and clean cardboard.',                          color:'#0369a1',       bg:'#e0f2fe',             badge:'Recycle Bin',     badgeBg:'#bae6fd', badgeColor:'#075985' },
+  { id:'res',    emoji:'🗑️', label:'Residual Waste',     sub:'Soiled packaging, diapers',      detail:'Waste that cannot be recycled or composted. Placed in BLACK bag for sanitary landfill. Keep separate from recyclables to avoid contamination.',                      color:'var(--orange)', bg:'var(--orange-light)', badge:'Black Bag',       badgeBg:'#fed7aa', badgeColor:'#9a3412' },
+  { id:'haz',    emoji:'⚠️', label:'Hazardous Waste',    sub:'Batteries, chemicals, e-waste',  detail:'Dangerous materials requiring special disposal. NEVER mix with regular trash. Bring to designated drop-off points (barangay hall, LGU centers).',                    color:'var(--red)',    bg:'var(--red-light)',    badge:'Special Disposal',badgeBg:'#fecaca', badgeColor:'#991b1b' },
+];
+
+const TIPS_DATA = [
+  { cat:'home',      num:'01', text:'Always rinse containers before placing them in the recycling bin to avoid contamination.' },
+  { cat:'home',      num:'02', text:'Flatten cardboard boxes to save space in your recycling bin and make collection easier.' },
+  { cat:'home',      num:'03', text:'Never mix hazardous waste with regular garbage. Bring batteries and electronics to designated drop-off points.' },
+  { cat:'home',      num:'04', text:'Compost food scraps like fruit peels and coffee grounds to reduce biodegradable waste in landfills.' },
+  { cat:'home',      num:'05', text:'Use reusable bags, bottles, and containers to drastically cut your plastic footprint.' },
+  { cat:'work',      num:'06', text:'Set up clearly labeled bins at your office: paper, plastic, and general waste at minimum.' },
+  { cat:'work',      num:'07', text:'Print documents double-sided and use digital alternatives where possible to reduce paper waste.' },
+  { cat:'work',      num:'08', text:'Encourage your office to join e-waste drives for proper disposal of old electronics and batteries.' },
+  { cat:'community', num:'09', text:'Participate in barangay cleanup drives and report illegal dumping to your local LGU.' },
+  { cat:'community', num:'10', text:'Share waste segregation knowledge with neighbors — proper segregation starts at home and spreads outward.' },
+  { cat:'community', num:'11', text:'Support local junk shops and materials recovery facilities (MRFs) by segregating clean recyclables.' },
+];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let currentScreen       = 'home';
+let selectedImageBase64 = null;   // base64 string (no data-URL prefix)
+let apiKey              = localStorage.getItem('openrouter_key') || '';
+let cameraStream        = null;   // MediaStream from getUserMedia
+let isMITMode           = false;  // true when running inside MIT AI Companion WebViewer
+
+// ═══════════════════════════════════════════════
+// MIT AI COMPANION DETECTION & BRIDGE
+// ═══════════════════════════════════════════════
+// MIT App Inventor's WebViewer exposes window.AppInventor.
+// To send an image FROM App Inventor TO this page, the App Inventor
+// block calls:  WebViewer.WebViewString = "<base64-jpeg-data>"
+// This page polls getWebViewString() every 500 ms and picks it up.
+// ═══════════════════════════════════════════════
+function detectMIT() {
+  // window.AppInventor is injected by the AI Companion WebViewer
+  if (typeof window.AppInventor !== 'undefined') {
+    isMITMode = true;
+    document.getElementById('mit-notice').style.display = 'block';
+    // In MIT mode the shutter cannot use getUserMedia, so relabel it
+    // Hide the in-HTML capture and upload buttons — App Inventor's own buttons handle this
+    document.getElementById('shutterBtn').style.display = 'none';
+    document.getElementById('uploadBtn').style.display  = 'none';
+    // Expand the Analyze button to fill the full row
+    document.getElementById('analyzeBtn').style.flex = '1';
+    startMITPolling();
+  }
+}
+
+function startMITPolling() {
+  // Poll every 500 ms for an image set by App Inventor via WebViewString.
+  // MIT App Inventor's Camera1.AfterPhoto gives a local file path like
+  // /storage/emulated/0/DCIM/Camera/IMG_xxx.jpg — NOT base64.
+  // We handle both cases: file path and base64 data.
+  setInterval(() => {
+    try {
+      const val = window.AppInventor.getWebViewString();
+      if (!val || val === window._lastMITVal) return;
+      window._lastMITVal = val;
+
+      if (val.startsWith('data:image')) {
+        // Already a full data-URL
+        const b64 = val.split(',')[1];
+        receiveImage(b64);
+      } else if (val.length > 500 && !val.startsWith('/') && !val.startsWith('file://')) {
+        // Looks like a raw base64 string
+        receiveImage(val);
+      } else {
+        // It's a file path (most common from Camera1.AfterPhoto)
+        receiveImageFromPath(val);
+      }
+    } catch(e) { /* ignore */ }
+  }, 500);
+}
+
+// Load image from a local file path (MIT Camera gives us this)
+// Draws it onto a canvas to extract base64 for the AI API call
+function receiveImageFromPath(path) {
+  // Show the image directly — MIT Companion's WebView can load local file:// paths
+  const src = path.startsWith('file://') ? path : 'file://' + path;
+  const prev = document.getElementById('uploaded-preview');
+
+  stopCamera();
+  document.getElementById('cam-placeholder').style.display = 'none';
+  document.getElementById('scanOverlay').style.display    = 'flex';
+  document.getElementById('liveVideo').classList.remove('active');
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('camHint').textContent = 'Image ready · tap Analyze';
+  document.getElementById('resultCard').classList.add('visible');
+  document.getElementById('resultContent').innerHTML =
+    '<p class="result-placeholder">Image loaded. Tap Analyze to identify.</p>';
+
+  prev.src = src;
+  prev.classList.add('visible');
+
+  // Convert to base64 via canvas so we can send it to the AI API
+  const img = new window.Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    // Scale down large photos to keep API payload reasonable
+    const MAX = 1024;
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+      else        { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  };
+  img.onerror = () => {
+    // If canvas loading fails (sandboxing), still allow Analyze with path-based src
+    // We'll try sending the image as a URL directly
+    selectedImageBase64 = '__path__' + src;
+  };
+  img.src = src;
+}
+
+// ─── Central function: load base64 image into preview ─────
+function receiveImage(base64) {
+  selectedImageBase64 = base64;
+  const dataUrl = 'data:image/jpeg;base64,' + base64;
+
+  // Stop live camera if running
+  stopCamera();
+
+  const prev = document.getElementById('uploaded-preview');
+  prev.src = dataUrl;
+  prev.classList.add('visible');
+  document.getElementById('cam-placeholder').style.display = 'none';
+  document.getElementById('scanOverlay').style.display    = 'flex';
+  document.getElementById('liveVideo').classList.remove('active');
+
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('camHint').textContent = 'Image ready · tap Analyze';
+
+  document.getElementById('resultCard').classList.add('visible');
+  document.getElementById('resultContent').innerHTML =
+    '<p class="result-placeholder">Image loaded. Tap Analyze to identify.</p>';
+}
+
+// ═══════════════════════════════════════════════
+// CAMERA (getUserMedia)
+// ═══════════════════════════════════════════════
+async function startCamera() {
+  if (isMITMode) return; // MIT WebViewer can't access getUserMedia
+  if (cameraStream) return; // already running
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
+      audio: false
+    });
+    cameraStream = stream;
+    const vid = document.getElementById('liveVideo');
+    vid.srcObject = stream;
+    vid.classList.add('active');
+    document.getElementById('cam-placeholder').style.display = 'none';
+    document.getElementById('scanOverlay').style.display    = 'flex';
+    document.getElementById('camHint').textContent = 'Tap ⚪ to capture · 📁 to upload';
+  } catch (err) {
+    console.warn('Camera access denied or unavailable:', err);
+    document.getElementById('cam-placeholder').style.display = 'flex';
+    document.getElementById('cam-placeholder').querySelector('p').innerHTML =
+      'Camera unavailable.<br>Use 📁 Upload instead.';
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  const vid = document.getElementById('liveVideo');
+  vid.srcObject = null;
+  vid.classList.remove('active');
+}
+
+// ─── Shutter button: snap a frame from the live video ─────
+function handleShutter() {
+  if (isMITMode) {
+    // Signal App Inventor to open the Camera.
+    // In your MIT blocks: when WebViewer.WebViewStringChange → if value = "ACTION:TAKE_PHOTO" → call Camera1.TakePicture
+    // After capture: set WebViewer.WebViewString = Camera1.Image
+    try { window.AppInventor.setWebViewString('ACTION:TAKE_PHOTO'); } catch(e) {}
+    return;
+  }
+
+  const vid = document.getElementById('liveVideo');
+
+  // If there's a captured/uploaded image already, retake
+  if (selectedImageBase64 && !cameraStream) {
+    resetCameraView();
+    startCamera();
+    return;
+  }
+
+  if (!cameraStream || vid.readyState < 2) {
+    // Camera not yet started — start it
+    startCamera();
+    return;
+  }
+
+  // Snap the current frame
+  const canvas = document.getElementById('snapCanvas');
+  canvas.width  = vid.videoWidth  || 640;
+  canvas.height = vid.videoHeight || 480;
+  canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height);
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  const b64     = dataUrl.split(',')[1];
+  receiveImage(b64);
+
+  // Change shutter to "retake" mode
+  document.getElementById('shutterBtn').classList.add('retake');
+  document.getElementById('camHint').textContent = 'Tap ⚪ to retake · Analyze when ready';
+}
+
+function resetCameraView() {
+  selectedImageBase64 = null;
+  const prev = document.getElementById('uploaded-preview');
+  prev.src = '';
+  prev.classList.remove('visible');
+  document.getElementById('cam-placeholder').style.display = 'none';
+  document.getElementById('scanOverlay').style.display = 'none';
+  document.getElementById('shutterBtn').classList.remove('retake');
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('camHint').textContent = 'Tap ⚪ to capture · 📁 to upload';
+}
+
+// ═══════════════════════════════════════════════
+// FILE UPLOAD (desktop browser fallback)
+// In MIT AI Companion, <input type="file"> does NOT work.
+// Instead, MIT blocks push base64 via WebViewString (polled above).
+// ═══════════════════════════════════════════════
+function handleUploadClick() {
+  if (isMITMode) {
+    // Signal App Inventor to open the ImagePicker.
+    // In your MIT blocks: when WebViewer.WebViewStringChange → if value = "ACTION:PICK_IMAGE" → call ImagePicker1.Open
+    // After the user picks: set WebViewer.WebViewString = ImagePicker1.Selection  (or Camera1.Image)
+    try { window.AppInventor.setWebViewString('ACTION:PICK_IMAGE'); } catch(e) {}
+    return;
+  }
+  document.getElementById('fileInput').click();
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const b64 = ev.target.result.split(',')[1];
+    receiveImage(b64);
+  };
+  reader.readAsDataURL(file);
+  // Reset so the same file can be re-selected
+  e.target.value = '';
+}
+
+// ═══════════════════════════════════════════════
+// AI ANALYSIS
+// ═══════════════════════════════════════════════
+const FREE_MODELS = [
+  'google/gemini-2.5-flash-preview:free',
+  'google/gemini-2.0-flash-001',
+  'meta-llama/llama-4-maverick:free',
+  'mistralai/mistral-small-3.1-24b-instruct:free',
+];
+
+const WASTE_PROMPT =
+  'You are WasteWise, a waste segregation expert for the Philippines (RA 9003). ' +
+  'Analyze the image and respond ONLY with a JSON object (no markdown, no explanation): ' +
+  '{"item":"name","category":"Biodegradable|Non-Biodegradable|Recyclable|Residual Waste|Hazardous Waste",' +
+  '"bin":"bin color/type","confidence":"High|Medium|Low","disposal":"1-2 sentence instruction","tip":"one eco-tip"}';
+
+async function callOpenRouter(model, imgBase64) {
+  const cleanKey = apiKey.replace(/[^\x20-\x7E]/g, '').trim();
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + cleanKey,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'WasteWise'
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: WASTE_PROMPT },
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + imgBase64 } }
+      ]}],
+      max_tokens: 400
+    })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+  return d;
+}
+
+async function analyzeWaste() {
+  if (!selectedImageBase64) {
+    handleUploadClick();
+    return;
+  }
+  if (!apiKey) { openSettings(); return; }
+
+  const resultCard    = document.getElementById('resultCard');
+  const resultContent = document.getElementById('resultContent');
+  resultCard.classList.add('visible');
+  document.getElementById('analyzeBtn').disabled = true;
+
+  // __path__ means canvas couldn't extract base64 (sandboxing) — not much we can do
+  if (selectedImageBase64.startsWith('__path__')) {
+    resultContent.innerHTML =
+      '<div style="color:var(--orange);font-size:13px;">⚠️ Could not read the image file directly.<br>' +
+      'In your App Inventor blocks, try connecting an <strong>ImagePicker</strong> instead of Camera, ' +
+      'or ask for help converting the camera output to base64.</div>';
+    document.getElementById('analyzeBtn').disabled = false;
+    return;
+  }
+
+  let data = null, lastErr = null;
+
+  for (let i = 0; i < FREE_MODELS.length; i++) {
+    const model     = FREE_MODELS[i];
+    const shortName = model.split('/')[1] || model;
+    resultContent.innerHTML =
+      '<div class="analyzing"><div class="spinner"></div><span>Analyzing with ' + shortName + '…</span></div>';
+    try {
+      data = await callOpenRouter(model, selectedImageBase64);
+      break;
+    } catch (e) {
+      lastErr = e;
+      console.warn('Model failed:', model, e.message);
+    }
+  }
+
+  document.getElementById('analyzeBtn').disabled = false;
+
+  if (!data) {
+    resultContent.innerHTML =
+      '<div style="color:var(--red);font-size:13px;">⚠️ All models unavailable.<br>' +
+      (lastErr ? lastErr.message : '') +
+      '<br><br><span style="color:var(--text-sub);">Check your API key in ⚙️ Settings.</span></div>';
+    return;
+  }
+
+  try {
+    const text  = (data.choices?.[0]?.message?.content) || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const p     = JSON.parse(clean);
+
+    const catColors = {
+      'Biodegradable':     { bg: 'var(--green-light)',  color: 'var(--green)'  },
+      'Non-Biodegradable': { bg: 'var(--blue-light)',   color: 'var(--blue)'   },
+      'Recyclable':        { bg: '#e0f2fe',              color: '#0369a1'       },
+      'Residual Waste':    { bg: 'var(--orange-light)', color: 'var(--orange)' },
+      'Hazardous Waste':   { bg: 'var(--red-light)',    color: 'var(--red)'    },
+    };
+    const cc = catColors[p.category] || { bg: '#f3f4f6', color: '#374151' };
+
+    resultContent.innerHTML =
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+        '<div class="result-category" style="background:' + cc.bg + ';color:' + cc.color + ';">♻️ ' + p.category + '</div>' +
+        '<span style="font-size:12px;color:var(--text-sub);font-weight:600;">' + (p.confidence || '') + ' confidence</span>' +
+      '</div>' +
+      '<div style="font-family:Nunito,sans-serif;font-weight:900;font-size:18px;margin-bottom:6px;">' + p.item + '</div>' +
+      '<div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:8px;">🗑️ ' + p.bin + '</div>' +
+      '<div class="result-description" style="margin-bottom:10px;">' + p.disposal + '</div>' +
+      '<div style="background:var(--green-light);border-radius:12px;padding:12px;font-size:13px;color:var(--green-dark);"><strong>💡 Tip:</strong> ' + p.tip + '</div>';
+  } catch (e) {
+    resultContent.innerHTML =
+      '<div style="color:var(--red);font-size:13px;">⚠️ Could not read AI response. Try again.</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SCREEN SWITCHING
+// ═══════════════════════════════════════════════
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  currentScreen = name;
+
+  if (name === 'camera') {
+    // Auto-start camera when entering screen (skip if MIT or already streaming)
+    if (!isMITMode && !cameraStream && !selectedImageBase64) {
+      startCamera();
+    }
+  } else {
+    // Stop camera when leaving the camera screen to save battery
+    stopCamera();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// API KEY MODAL
+// ═══════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('apiKeyInput').value = apiKey;
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveApiKey() {
+  const raw = document.getElementById('apiKeyInput').value;
+  const val = raw.replace(/[^\x20-\x7E]/g, '').trim();
+  if (val) {
+    apiKey = val;
+    localStorage.setItem('openrouter_key', val);
+    document.getElementById('apiKeyInput').value = val;
+  }
+  closeSettings();
+}
+
+// ═══════════════════════════════════════════════
+// CLASSIFICATION
+// ═══════════════════════════════════════════════
+function filterWaste(cat, el) {
+  document.querySelectorAll('#classifyChips .chip').forEach(c => { c.className = 'chip'; });
+  const classMap = { all:'active-all', bio:'active-bio', nonbio:'active-nonbio', rec:'active-rec', res:'active-res', haz:'active-haz' };
+  el.classList.add(classMap[cat] || 'active-all');
+  renderWasteList(cat);
+}
+
+function renderWasteList(cat) {
+  const list  = document.getElementById('wasteList');
+  const items = cat === 'all' ? WASTE_DATA : WASTE_DATA.filter(w => w.id === cat);
+  list.innerHTML = items.map(w => `
+    <div class="waste-card ${cat === w.id ? 'selected' : ''}" onclick="toggleWasteCard(this)">
+      <div class="waste-icon-wrap" style="background:${w.bg};">${w.emoji}</div>
+      <div class="waste-info">
+        <h3>${w.label}</h3>
+        <div class="sub">${w.sub}</div>
+        <div class="badge" style="background:${w.badgeBg};color:${w.badgeColor};">${w.badge}</div>
+        <div class="detail" style="display:none;">${w.detail}</div>
+      </div>
+    </div>
+  `).join('');
+  if (cat !== 'all') {
+    const first = list.querySelector('.waste-card');
+    if (first) { first.classList.add('selected'); first.querySelector('.detail').style.display = 'block'; }
+  }
+}
+
+function toggleWasteCard(el) {
+  const detail = el.querySelector('.detail');
+  const isOpen = detail.style.display === 'block';
+  document.querySelectorAll('.waste-card').forEach(c => {
+    c.classList.remove('selected');
+    c.querySelector('.detail').style.display = 'none';
+  });
+  if (!isOpen) { el.classList.add('selected'); detail.style.display = 'block'; }
+}
+
+// ═══════════════════════════════════════════════
+// TIPS
+// ═══════════════════════════════════════════════
+function filterTips(cat, el) {
+  document.querySelectorAll('.tip-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTips(cat);
+}
+
+function renderTips(cat) {
+  const list  = document.getElementById('tipsList');
+  const items = cat === 'all' ? TIPS_DATA : TIPS_DATA.filter(t => t.cat === cat);
+  list.innerHTML = items.map(t => `
+    <div class="tip-card">
+      <div class="tip-meta">TIP ${t.num} · ${t.cat.toUpperCase()}</div>
+      <div class="tip-text">${t.text}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.onload = () => {
+  renderWasteList('all');
+  renderTips('all');
+  detectMIT();
+  if (!apiKey) setTimeout(openSettings, 800);
+};
+</script>
+</body>
+</html>
