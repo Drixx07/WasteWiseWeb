@@ -249,7 +249,7 @@
   .tip-meta { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--green); text-transform: uppercase; margin-bottom: 6px; }
   .tip-text { font-size: 14px; line-height: 1.6; }
 
-  /* API key modal */
+  /* OpenRouter API key modal */
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 200; align-items: flex-end; justify-content: center;
@@ -270,12 +270,7 @@
   .modal .skip-link { text-align: center; margin-top: 10px; font-size: 13px; color: var(--text-sub); cursor: pointer; }
   .modal .skip-link span { color: var(--green); font-weight: 600; }
 
-  /* MIT mode notice */
-  #mit-notice {
-    display: none; margin: 0 16px 8px;
-    background: #fff9db; border: 1.5px solid #e67700; border-radius: 12px;
-    padding: 10px 14px; font-size: 12px; color: #7c4b00; line-height: 1.5;
-  }
+  /* Utility */
 
   /* Utility */
   .mt-16 { margin-top: 16px; }
@@ -337,13 +332,6 @@
 
 <!-- ════════════════ CAMERA ════════════════ -->
 <div id="screen-camera" class="screen">
- 
-
-  <!-- MIT App Inventor notice (shown when MIT bridge is detected) -->
-  <div id="mit-notice">
-    📱 <strong>MIT AI Companion detected.</strong> Use the <strong>📤 Upload</strong> button — your App Inventor block sends the photo here. The shutter button uses the live camera stream.
-  </div>
-
   <!-- Camera / preview area -->
   <div class="camera-area" id="cameraArea">
     <!-- Placeholder shown before camera starts -->
@@ -452,7 +440,7 @@
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <h2>🔑 OpenRouter API Key</h2>
-    <p>Enter your free OpenRouter API key to enable AI waste detection. Get one free at <strong>openrouter.ai</strong> — no credit card needed for free models.</p>
+    <p>Enter your OpenRouter API key to enable AI waste detection. Create and manage your key at <strong>openrouter.ai/settings/keys</strong>.</p>
     <input type="password" id="apiKeyInput" placeholder="sk-or-v1-..." value="">
     <button class="btn-primary" onclick="saveApiKey()">Save Key</button>
     <div class="skip-link" onclick="closeSettings()"><span>Close</span></div>
@@ -490,131 +478,19 @@ const TIPS_DATA = [
 // ═══════════════════════════════════════════════
 let currentScreen       = 'home';
 let selectedImageBase64 = null;   // base64 string (no data-URL prefix)
-let apiKey              = localStorage.getItem('openrouter_key') || '';
+// OPTIONAL BUILT-IN KEY FOR A PRIVATE/LOCAL PROTOTYPE ONLY.
+// Paste your OpenRouter key between the quotes below.
+// WARNING: Never publish a real key in a public GitHub repository.
+const BUILT_IN_OPENROUTER_KEY = '';
+
+let apiKey = BUILT_IN_OPENROUTER_KEY || localStorage.getItem('openrouter_key') || '';
 let cameraStream        = null;   // MediaStream from getUserMedia
-let isMITMode           = false;  // true when running inside MIT AI Companion WebViewer
 
-// ═══════════════════════════════════════════════
-// MIT AI COMPANION DETECTION & BRIDGE
-// ═══════════════════════════════════════════════
-// MIT App Inventor's WebViewer exposes window.AppInventor.
-// To send an image FROM App Inventor TO this page, the App Inventor
-// block calls:  WebViewer.WebViewString = "<base64-jpeg-data>"
-// This page polls getWebViewString() every 500 ms and picks it up.
-// ═══════════════════════════════════════════════
-function detectMIT() {
-  // window.AppInventor is injected by the AI Companion WebViewer
-  if (typeof window.AppInventor !== 'undefined') {
-    isMITMode = true;
-    document.getElementById('mit-notice').style.display = 'block';
-    // In MIT mode the shutter cannot use getUserMedia, so relabel it
-    // Hide the in-HTML capture and upload buttons — App Inventor's own buttons handle this
-    document.getElementById('shutterBtn').style.display = 'none';
-    document.getElementById('uploadBtn').style.display  = 'none';
-    // Expand the Analyze button to fill the full row
-    document.getElementById('analyzeBtn').style.flex = '1';
-    startMITPolling();
-  }
-}
-
-function startMITPolling() {
-  // Poll every 500 ms for an image set by App Inventor via WebViewString.
-  // MIT App Inventor's Camera1.AfterPhoto gives a local file path like
-  // /storage/emulated/0/DCIM/Camera/IMG_xxx.jpg — NOT base64.
-  // We handle both cases: file path and base64 data.
-  setInterval(() => {
-    try {
-      const val = window.AppInventor.getWebViewString();
-      if (!val || val === window._lastMITVal) return;
-      window._lastMITVal = val;
-
-      if (val.startsWith('data:image')) {
-        // Already a full data-URL
-        const b64 = val.split(',')[1];
-        receiveImage(b64);
-      } else if (val.length > 500 && !val.startsWith('/') && !val.startsWith('file://')) {
-        // Looks like a raw base64 string
-        receiveImage(val);
-      } else {
-        // It's a file path (most common from Camera1.AfterPhoto)
-        receiveImageFromPath(val);
-      }
-    } catch(e) { /* ignore */ }
-  }, 500);
-}
-
-// Load image from a local file path (MIT Camera gives us this)
-// Draws it onto a canvas to extract base64 for the AI API call
-function receiveImageFromPath(path) {
-  // Show the image directly — MIT Companion's WebView can load local file:// paths
-  const src = path.startsWith('file://') ? path : 'file://' + path;
-  const prev = document.getElementById('uploaded-preview');
-
-  stopCamera();
-  document.getElementById('cam-placeholder').style.display = 'none';
-  document.getElementById('scanOverlay').style.display    = 'flex';
-  document.getElementById('liveVideo').classList.remove('active');
-  document.getElementById('analyzeBtn').disabled = false;
-  document.getElementById('camHint').textContent = 'Image ready · tap Analyze';
-  document.getElementById('resultCard').classList.add('visible');
-  document.getElementById('resultContent').innerHTML =
-    '<p class="result-placeholder">Image loaded. Tap Analyze to identify.</p>';
-
-  prev.src = src;
-  prev.classList.add('visible');
-
-  // Convert to base64 via canvas so we can send it to the AI API
-  const img = new window.Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    // Scale down large photos to keep API payload reasonable
-    const MAX = 1024;
-    let w = img.naturalWidth, h = img.naturalHeight;
-    if (w > MAX || h > MAX) {
-      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-      else        { w = Math.round(w * MAX / h); h = MAX; }
-    }
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-  };
-  img.onerror = () => {
-    // If canvas loading fails (sandboxing), still allow Analyze with path-based src
-    // We'll try sending the image as a URL directly
-    selectedImageBase64 = '__path__' + src;
-  };
-  img.src = src;
-}
-
-// ─── Central function: load base64 image into preview ─────
-function receiveImage(base64) {
-  selectedImageBase64 = base64;
-  const dataUrl = 'data:image/jpeg;base64,' + base64;
-
-  // Stop live camera if running
-  stopCamera();
-
-  const prev = document.getElementById('uploaded-preview');
-  prev.src = dataUrl;
-  prev.classList.add('visible');
-  document.getElementById('cam-placeholder').style.display = 'none';
-  document.getElementById('scanOverlay').style.display    = 'flex';
-  document.getElementById('liveVideo').classList.remove('active');
-
-  document.getElementById('analyzeBtn').disabled = false;
-  document.getElementById('camHint').textContent = 'Image ready · tap Analyze';
-
-  document.getElementById('resultCard').classList.add('visible');
-  document.getElementById('resultContent').innerHTML =
-    '<p class="result-placeholder">Image loaded. Tap Analyze to identify.</p>';
-}
 
 // ═══════════════════════════════════════════════
 // CAMERA (getUserMedia)
 // ═══════════════════════════════════════════════
 async function startCamera() {
-  if (isMITMode) return; // MIT WebViewer can't access getUserMedia
   if (cameraStream) return; // already running
 
   try {
@@ -649,14 +525,6 @@ function stopCamera() {
 
 // ─── Shutter button: snap a frame from the live video ─────
 function handleShutter() {
-  if (isMITMode) {
-    // Signal App Inventor to open the Camera.
-    // In your MIT blocks: when WebViewer.WebViewStringChange → if value = "ACTION:TAKE_PHOTO" → call Camera1.TakePicture
-    // After capture: set WebViewer.WebViewString = Camera1.Image
-    try { window.AppInventor.setWebViewString('ACTION:TAKE_PHOTO'); } catch(e) {}
-    return;
-  }
-
   const vid = document.getElementById('liveVideo');
 
   // If there's a captured/uploaded image already, retake
@@ -701,18 +569,9 @@ function resetCameraView() {
 }
 
 // ═══════════════════════════════════════════════
-// FILE UPLOAD (desktop browser fallback)
-// In MIT AI Companion, <input type="file"> does NOT work.
-// Instead, MIT blocks push base64 via WebViewString (polled above).
+// FILE UPLOAD (standard browser)
 // ═══════════════════════════════════════════════
 function handleUploadClick() {
-  if (isMITMode) {
-    // Signal App Inventor to open the ImagePicker.
-    // In your MIT blocks: when WebViewer.WebViewStringChange → if value = "ACTION:PICK_IMAGE" → call ImagePicker1.Open
-    // After the user picks: set WebViewer.WebViewString = ImagePicker1.Selection  (or Camera1.Image)
-    try { window.AppInventor.setWebViewString('ACTION:PICK_IMAGE'); } catch(e) {}
-    return;
-  }
   document.getElementById('fileInput').click();
 }
 
@@ -855,8 +714,8 @@ function switchScreen(name) {
   currentScreen = name;
 
   if (name === 'camera') {
-    // Auto-start camera when entering screen (skip if MIT or already streaming)
-    if (!isMITMode && !cameraStream && !selectedImageBase64) {
+    // Auto-start camera when entering the screen
+    if (!cameraStream && !selectedImageBase64) {
       startCamera();
     }
   } else {
@@ -952,7 +811,6 @@ function renderTips(cat) {
 window.onload = () => {
   renderWasteList('all');
   renderTips('all');
-  detectMIT();
   if (!apiKey) setTimeout(openSettings, 800);
 };
 </script>
